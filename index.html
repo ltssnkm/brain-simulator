@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>樂道中學 創新科技嘉年華 2026 - 腦部保護裝置與撞擊模擬器 (手勢控制版)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    
+    <!-- MediaPipe Hands & Camera Utils CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Noto Sans TC', 'sans-serif'],
+                    },
+                    colors: {
+                        cyber: {
+                            dark: '#0b0f19',
+                            card: '#151d30',
+                            border: '#2a3652',
+                            accent: '#38bdf8',
+                            neon: '#22c55e',
+                            pink: '#ec4899',
+                            purple: '#a855f7'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0b0f19;
+            color: #e2e8f0;
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+        .glow-border {
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.15);
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b0f19;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2a3652;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #38bdf8;
+        }
+        .lobe-btn {
+            transition: all 0.3s ease;
+        }
+        .lobe-btn.active {
+            transform: scale(1.05);
+            filter: drop-shadow(0 0 8px currentColor);
+        }
+        /* Mirror video for natural interaction */
+        .mirror-mode {
+            transform: scaleX(-1);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- HEADER / NAVIGATION -->
+    <header class="bg-cyber-card/90 border-b border-cyber-border sticky top-0 z-50 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-gradient-to-tr from-cyan-500 to-blue-600 p-2.5 rounded-xl shadow-lg text-white">
+                    <i class="fa-solid font-bold fa-brain text-2xl"></i>
+                </div>
+                <div>
+                    <span class="text-xs font-semibold tracking-wider text-cyan-400 uppercase">樂道中學 LOCK TAO SECONDARY SCHOOL</span>
+                    <h1 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                        腦部撞擊模擬器 <span class="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">AI 手勢追蹤版</span>
+                    </h1>
+                </div>
+            </div>
+            
+            <nav class="flex space-x-1 sm:space-x-2 bg-cyber-dark/80 p-1.5 rounded-xl border border-cyber-border text-xs sm:text-sm">
+                <button onclick="switchTab('explorer')" id="tab-explorer" class="tab-btn px-3 py-1.5 rounded-lg font-medium transition-all text-cyan-400 bg-cyber-card border border-cyan-500/30">
+                    <i class="fa-solid fa-graduation-cap mr-1"></i> 1. 大腦小百科
+                </button>
+                <button onclick="switchTab('simulator')" id="tab-simulator" class="tab-btn px-3 py-1.5 rounded-lg font-medium transition-all text-gray-400 hover:text-white">
+                    <i class="fa-solid fa-flask-vial mr-1"></i> 2. AI 手勢撞擊實驗
+                </button>
+                <button onclick="switchTab('worksheet')" id="tab-worksheet" class="tab-btn px-3 py-1.5 rounded-lg font-medium transition-all text-gray-400 hover:text-white">
+                    <i class="fa-solid fa-file-signature mr-1"></i> 3. 數據與腦力激盪
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex-grow w-full">
+
+        <!-- ================= MODULE 1: BRAIN EXPLORER ================= -->
+        <section id="module-explorer" class="tab-content space-y-6">
+            <div class="bg-gradient-to-r from-cyan-950/60 via-cyber-card to-purple-950/40 p-6 rounded-2xl border border-cyber-border flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-white mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-sitemap text-cyan-400"></i> 大腦指揮中心 (Brain Lobes Map)
+                    </h2>
+                    <p class="text-gray-300 text-sm max-w-3xl">
+                        大腦是人體最重要的地方，就像電腦的 CPU 一樣。在專題實驗中，我們在紙腦模型的五個關鍵區域安裝了撞擊力探測器（Arduino + 100Ω 電阻器）。點擊下方各個腦區探索其分工與功能！
+                    </p>
+                </div>
+                <div class="flex items-center gap-2 bg-cyber-dark/60 px-4 py-2 rounded-xl border border-cyber-border text-xs text-cyan-300 shrink-0">
+                    <i class="fa-solid fa-microchip text-lg text-emerald-400"></i>
+                    <span>感測器對應：F, P, O, LT, RT</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- SVG Interactive Visualization -->
+                <div class="lg:col-span-7 bg-cyber-card rounded-2xl p-6 border border-cyber-border flex flex-col items-center justify-center relative min-h-[420px] overflow-hidden">
+                    <div class="absolute top-4 left-4 text-xs text-gray-400 flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
+                        點擊腦區圖示查看詳細資料
+                    </div>
+
+                    <div class="relative w-full max-w-md aspect-[4/3] flex items-center justify-center">
+                        <svg viewBox="0 0 500 400" class="w-full h-full drop-shadow-[0_0_15px_rgba(56,189,248,0.2)]">
+                            <path d="M 120,200 C 100,120 180,50 280,50 C 370,50 430,100 440,180 C 450,240 420,300 370,320 C 330,330 300,310 270,310 C 220,310 170,340 130,300 C 100,270 110,230 120,200 Z" 
+                                  fill="#1e293b" stroke="#334155" stroke-width="4"/>
+
+                            <path id="svg-lobe-F" onclick="selectLobe('F')" class="cursor-pointer transition-all hover:opacity-80"
+                                  d="M 120,200 C 100,120 180,50 260,50 L 250,210 C 200,210 160,220 120,200 Z" 
+                                  fill="#ef4444" fill-opacity="0.35" stroke="#ef4444" stroke-width="3"/>
+                            
+                            <path id="svg-lobe-P" onclick="selectLobe('P')" class="cursor-pointer transition-all hover:opacity-80"
+                                  d="M 260,50 C 340,50 410,80 430,160 L 320,200 L 250,210 Z" 
+                                  fill="#3b82f6" fill-opacity="0.35" stroke="#3b82f6" stroke-width="3"/>
+
+                            <path id="svg-lobe-O" onclick="selectLobe('O')" class="cursor-pointer transition-all hover:opacity-80"
+                                  d="M 430,160 C 450,220 430,280 380,300 L 320,200 Z" 
+                                  fill="#a855f7" fill-opacity="0.35" stroke="#a855f7" stroke-width="3"/>
+
+                            <path id="svg-lobe-T" onclick="selectLobe('LT')" class="cursor-pointer transition-all hover:opacity-80"
+                                  d="M 200,210 L 330,200 L 360,300 C 310,320 230,320 170,280 C 180,240 190,220 200,210 Z" 
+                                  fill="#10b981" fill-opacity="0.35" stroke="#10b981" stroke-width="3"/>
+
+                            <g transform="translate(180, 130)" onclick="selectLobe('F')" class="cursor-pointer">
+                                <circle r="18" fill="#ef4444" class="animate-pulse opacity-80"/>
+                                <circle r="12" fill="#0b0f19" stroke="#ef4444" stroke-width="2"/>
+                                <text x="0" y="4" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">F</text>
+                            </g>
+
+                            <g transform="translate(330, 110)" onclick="selectLobe('P')" class="cursor-pointer">
+                                <circle r="18" fill="#3b82f6" class="animate-pulse opacity-80"/>
+                                <circle r="12" fill="#0b0f19" stroke="#3b82f6" stroke-width="2"/>
+                                <text x="0" y="4" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">P</text>
+                            </g>
+
+                            <g transform="translate(400, 220)" onclick="selectLobe('O')" class="cursor-pointer">
+                                <circle r="18" fill="#a855f7" class="animate-pulse opacity-80"/>
+                                <circle r="12" fill="#0b0f19" stroke="#a855f7" stroke-width="2"/>
+                                <text x="0" y="4" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">O</text>
+                            </g>
+
+                            <g transform="translate(230, 250)" onclick="selectLobe('LT')" class="cursor-pointer">
+                                <circle r="16" fill="#10b981" class="animate-pulse opacity-80"/>
+                                <circle r="11" fill="#0b0f19" stroke="#10b981" stroke-width="2"/>
+                                <text x="0" y="4" font-size="9" font-weight="bold" fill="#ffffff" text-anchor="middle">LT</text>
+                            </g>
+
+                            <g transform="translate(300, 260)" onclick="selectLobe('RT')" class="cursor-pointer">
+                                <circle r="16" fill="#10b981" class="animate-pulse opacity-80"/>
+                                <circle r="11" fill="#0b0f19" stroke="#10b981" stroke-width="2"/>
+                                <text x="0" y="4" font-size="9" font-weight="bold" fill="#ffffff" text-anchor="middle">RT</text>
+                            </g>
+                        </svg>
+                    </div>
+
+                    <div class="flex flex-wrap justify-center gap-2 mt-4">
+                        <button onclick="selectLobe('F')" id="btn-lobe-F" class="lobe-btn px-3 py-1.5 rounded-lg border border-red-500/40 bg-red-950/30 text-red-400 text-xs font-semibold">F 前額葉</button>
+                        <button onclick="selectLobe('P')" id="btn-lobe-P" class="lobe-btn px-3 py-1.5 rounded-lg border border-blue-500/40 bg-blue-950/30 text-blue-400 text-xs font-semibold">P 頂葉</button>
+                        <button onclick="selectLobe('O')" id="btn-lobe-O" class="lobe-btn px-3 py-1.5 rounded-lg border border-purple-500/40 bg-purple-950/30 text-purple-400 text-xs font-semibold">O 枕葉</button>
+                        <button onclick="selectLobe('LT')" id="btn-lobe-LT" class="lobe-btn px-3 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-950/30 text-emerald-400 text-xs font-semibold">LT 左顳葉</button>
+                        <button onclick="selectLobe('RT')" id="btn-lobe-RT" class="lobe-btn px-3 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-950/30 text-emerald-400 text-xs font-semibold">RT 右顳葉</button>
+                    </div>
+                </div>
+
+                <!-- Lobe Detail Card -->
+                <div class="lg:col-span-5 bg-cyber-card rounded-2xl p-6 border border-cyber-border flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between border-b border-cyber-border pb-4 mb-4">
+                            <div>
+                                <span id="lobe-code" class="text-xs px-2.5 py-1 rounded bg-red-500/20 text-red-400 font-mono font-bold border border-red-500/30">FRONTAL LOBE (F)</span>
+                                <h3 id="lobe-name" class="text-2xl font-bold text-white mt-2">前額葉</h3>
+                            </div>
+                            <div id="lobe-badge" class="bg-red-500/10 border border-red-500/30 text-red-400 p-3 rounded-xl text-center">
+                                <i class="fa-solid fa-user-gear text-2xl"></i>
+                                <div id="lobe-nickname" class="text-xs font-bold mt-1">指揮官</div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <h4 class="text-xs text-gray-400 uppercase tracking-wider mb-1"><i class="fa-solid fa-bullseye text-cyan-400 mr-1"></i> 主要任務</h4>
+                                <p id="lobe-task" class="text-gray-200 text-sm font-medium bg-cyber-dark/50 p-3 rounded-lg border border-cyber-border">思考與決策</p>
+                            </div>
+                            <div>
+                                <h4 class="text-xs text-gray-400 uppercase tracking-wider mb-1"><i class="fa-solid fa-key text-yellow-400 mr-1"></i> 關鍵功能</h4>
+                                <p id="lobe-function" class="text-gray-200 text-sm bg-cyber-dark/50 p-3 rounded-lg border border-cyber-border">計劃、性格養成、邏輯推理與情緒控制</p>
+                            </div>
+                            <div>
+                                <h4 class="text-xs text-gray-400 uppercase tracking-wider mb-1"><i class="fa-solid fa-triangle-exclamation text-rose-400 mr-1"></i> 受創可能影響</h4>
+                                <p id="lobe-damage" class="text-rose-200/90 text-sm bg-rose-950/20 p-3 rounded-lg border border-rose-500/30">思考混亂、難以制定計劃、情緒容易失控或性格改變。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-cyber-border flex items-center justify-between text-xs text-gray-400">
+                        <span><i class="fa-solid fa-plug text-emerald-400 mr-1"></i> Arduino 探測器: <strong id="lobe-sensor-pin" class="text-white">A0 (100Ω)</strong></span>
+                        <button onclick="switchTab('simulator')" class="text-cyan-400 hover:text-cyan-300 font-medium flex items-center gap-1">
+                            前往撞擊測試 <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= MODULE 2: VIRTUAL IMPACT SIMULATOR (WITH WEBCAM HAND TRACKING) ================= -->
+        <section id="module-simulator" class="tab-content hidden space-y-6">
+            
+            <!-- MODE TOGGLE BANNER -->
+            <div class="bg-cyber-card p-4 rounded-2xl border border-cyber-border flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-hand-pointer text-cyan-400 text-2xl"></i>
+                    <div>
+                        <h3 class="text-base font-bold text-white">控制模式選擇 (Control Mode)</h3>
+                        <p class="text-xs text-gray-400">使用 Webcam 手勢實時移動球的位置與釋放高度，或切換為手動拉桿調整。</p>
+                    </div>
+                </div>
+                <div class="flex items-center bg-cyber-dark p-1.5 rounded-xl border border-cyber-border">
+                    <button id="mode-btn-gestures" onclick="setControlMode('gestures')" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-cyan-400 bg-cyber-card border border-cyan-500/30">
+                        <i class="fa-solid fa-camera text-emerald-400 mr-1.5"></i> 視訊手勢追蹤
+                    </button>
+                    <button id="mode-btn-manual" onclick="setControlMode('manual')" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-gray-400 hover:text-white">
+                        <i class="fa-solid fa-sliders text-cyan-400 mr-1.5"></i> 手動 / 滑鼠拉桿
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Left Panel: Webcam Hand Tracking or Manual Controls -->
+                <div class="lg:col-span-4 bg-cyber-card rounded-2xl p-5 border border-cyber-border space-y-4 flex flex-col justify-between">
+                    
+                    <!-- WEBCAM TRACKING VIEW -->
+                    <div id="webcam-control-section" class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-cyan-400 flex items-center gap-1.5">
+                                <i class="fa-solid fa-video text-rose-500 animate-pulse"></i> 手勢追蹤鏡頭 (MediaPipe AI)
+                            </span>
+                            <span id="webcam-status" class="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">尚未啟動</span>
+                        </div>
+
+                        <!-- Video Container with Overlay Canvas -->
+                        <div class="relative w-full aspect-video bg-cyber-dark rounded-xl overflow-hidden border border-cyber-border flex items-center justify-center">
+                            <!-- Hidden HTML Video element -->
+                            <video id="webcam-video" class="absolute w-full h-full object-cover mirror-mode" playsinline muted></video>
+                            <!-- Overlay Canvas for Hand Skeleton -->
+                            <canvas id="hand-canvas" class="absolute w-full h-full object-cover mirror-mode"></canvas>
+
+                            <!-- Placeholder initial prompt -->
+                            <div id="cam-placeholder" class="text-center p-4 z-10 space-y-2">
+                                <i class="fa-solid fa-camera-retro text-3xl text-gray-500"></i>
+                                <p class="text-xs text-gray-400">點擊下方按鈕以啟用鏡頭進行手勢控制</p>
+                                <button onclick="startWebcam()" class="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-bold shadow">
+                                    <i class="fa-solid fa-power-off mr-1"></i> 啟動視訊鏡頭
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Gesture Guide Card -->
+                        <div class="bg-cyber-dark/80 p-3 rounded-xl border border-cyber-border text-xs space-y-1.5 text-gray-300">
+                            <div class="text-cyan-400 font-bold flex items-center gap-1 border-b border-cyber-border pb-1">
+                                <i class="fa-solid fa-hand text-amber-400"></i> 手勢操控指南：
+                            </div>
+                            <div class="flex items-center gap-2"><i class="fa-solid fa-arrow-arrows-up-down text-emerald-400"></i> <span><strong>手掌上下移動：</strong> 調整釋放高度 (10 - 50 cm)</span></div>
+                            <div class="flex items-center gap-2"><i class="fa-solid fa-arrow-arrows-left-right text-blue-400"></i> <span><strong>手掌左右移動：</strong> 調整撞擊角度 (30° - 90°)</span></div>
+                            <div class="flex items-center gap-2"><i class="fa-solid fa-hand-back-fist text-rose-400"></i> <span><strong>食指與大拇指捏合 (Pinch)：</strong> 立即釋放擺錘！</span></div>
+                        </div>
+                    </div>
+
+                    <!-- MANUAL CONTROLS SECTION (Shown in manual mode or alongside) -->
+                    <div id="manual-control-section" class="space-y-4">
+                        <!-- Protection Choice -->
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">1. 保護裝備選擇 (Protection)</label>
+                            <select id="sim-protection" onchange="updateSimSetup()" class="w-full bg-cyber-dark border border-cyber-border rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500">
+                                <option value="none">💥 沒有任何保護 (No Protection)</option>
+                                <option value="helmet">🪖 塑膠頭盔 (Plastic Helmet X)</option>
+                                <option value="custom">🛡️ 自訂保護裝置 (Device Y)</option>
+                            </select>
+                        </div>
+
+                        <!-- Custom Device Strategy -->
+                        <div id="custom-strategy-box" class="hidden bg-cyber-dark/60 p-3 rounded-xl border border-cyan-500/30 space-y-1.5">
+                            <label class="block text-xs text-cyan-300 font-semibold">自訂裝置減傷策略 (Strategy Y):</label>
+                            <select id="sim-strategy" onchange="updateSimSetup()" class="w-full bg-cyber-card border border-cyber-border rounded-lg px-2.5 py-1.5 text-xs text-white">
+                                <option value="cushion">緩衝軟墊法 (棉花/海綿/泡泡紙 - 吸收撞擊力)</option>
+                                <option value="airbag">氣囊保護法 (氣球/空氣層 - 分散壓力)</option>
+                                <option value="shell">外殼堅固法 (膠片/硬紙板 - 阻擋撞擊)</option>
+                                <option value="suspension">懸空避震法 (彈性材料 - 避開直接接觸)</option>
+                            </select>
+                        </div>
+
+                        <!-- Manual Sliders (Disabled in Gestures Mode) -->
+                        <div id="manual-sliders-group" class="space-y-3 opacity-50 pointer-events-none">
+                            <!-- Pendulum Angle -->
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">2. 擺錘撞擊角度 (°)</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button onclick="setAngle(30)" id="angle-30" class="angle-btn py-1.5 rounded-xl text-xs font-bold border border-cyber-border bg-cyber-dark text-gray-300">30°</button>
+                                    <button onclick="setAngle(60)" id="angle-60" class="angle-btn py-1.5 rounded-xl text-xs font-bold border border-cyan-500 bg-cyan-950/40 text-cyan-400">60°</button>
+                                    <button onclick="setAngle(90)" id="angle-90" class="angle-btn py-1.5 rounded-xl text-xs font-bold border border-cyber-border bg-cyber-dark text-gray-300">90°</button>
+                                </div>
+                            </div>
+
+                            <!-- Drop Height Slider -->
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="text-xs font-semibold text-gray-300 uppercase tracking-wider">3. 釋放高度 (Drop Height)</label>
+                                    <span id="height-val" class="text-xs text-cyan-400 font-mono font-bold">20 cm</span>
+                                </div>
+                                <input type="range" id="sim-height" min="10" max="50" value="20" oninput="updateHeightVal(this.value)" class="w-full accent-cyan-400 cursor-pointer">
+                            </div>
+                        </div>
+
+                        <!-- Target Lobe -->
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">4. 受擊區域對應 (Target Lobe)</label>
+                            <select id="sim-target" onchange="updateSimSetup()" class="w-full bg-cyber-dark border border-cyber-border rounded-xl px-3 py-2 text-xs text-white">
+                                <option value="F">🔴 正面撞擊 - 前額葉 (Frontal F)</option>
+                                <option value="P">🔵 斜頂撞擊 - 頂葉 (Parietal P)</option>
+                                <option value="O">🟣 後方撞擊 - 枕葉 (Occipital O)</option>
+                                <option value="LT">🟢 側面撞擊 - 左/右顳葉 (Temporal LT/RT)</option>
+                            </select>
+                        </div>
+
+                        <!-- Trial Selector -->
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">5. 測試次數 (Trial)</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="setTrial(1)" id="trial-1" class="trial-btn py-1.5 rounded-xl text-xs font-bold border border-cyan-500 bg-cyan-950/50 text-cyan-300">測試一 (Test 1)</button>
+                                <button onclick="setTrial(2)" id="trial-2" class="trial-btn py-1.5 rounded-xl text-xs font-bold border border-cyber-border bg-cyber-dark text-gray-400">測試二 (Test 2)</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Trigger Impact Button -->
+                    <button onclick="runImpactSimulation()" id="btn-trigger" class="w-full py-3 px-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg shadow-cyan-500/20 transition-all flex items-center justify-center gap-2 text-sm mt-3">
+                        <i class="fa-solid fa-play"></i> 釋放擺錘，執行撞擊！
+                    </button>
+                </div>
+
+                <!-- Right Panel: Collision Physics Canvas & Realtime Sensor Dashboard -->
+                <div class="lg:col-span-8 flex flex-col gap-6">
+                    <!-- Main Physics Interactive Canvas -->
+                    <div class="bg-cyber-card rounded-2xl p-4 border border-cyber-border relative flex flex-col items-center overflow-hidden">
+                        
+                        <!-- Top Realtime Info Bar -->
+                        <div class="w-full flex flex-wrap justify-between items-center mb-2 px-2 text-xs text-gray-400 gap-2">
+                            <span class="flex items-center gap-1.5">
+                                <i class="fa-solid fa-crosshairs text-amber-400"></i> 
+                                高度：<strong id="live-height-tag" class="text-cyan-400 font-mono">20 cm</strong> | 
+                                角度：<strong id="live-angle-tag" class="text-amber-400 font-mono">60°</strong>
+                            </span>
+                            <span id="status-tag" class="px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-medium">
+                                準備就緒 (使用手勢或按鈕釋放)
+                            </span>
+                        </div>
+
+                        <!-- Collision Simulation Canvas -->
+                        <canvas id="simCanvas" class="w-full h-80 sm:h-96 bg-cyber-dark rounded-xl border border-cyber-border/60"></canvas>
+                    </div>
+
+                    <!-- Realtime Arduino Sensor Readout Dashboard -->
+                    <div class="bg-cyber-card rounded-2xl p-5 border border-cyber-border">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-microchip text-emerald-400"></i> Arduino 撞擊力探測器數據 (模擬讀數 - N)
+                            </h3>
+                            <span class="text-xs text-gray-400 font-mono">Sampling Rate: 100Hz</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center">
+                            <div id="card-F" class="bg-cyber-dark p-3 rounded-xl border border-red-500/30 transition-all">
+                                <span class="text-[10px] font-bold text-red-400 block">前額葉 (F)</span>
+                                <span id="val-F" class="text-lg font-mono font-bold text-white my-1 block">0.0</span>
+                                <span class="text-[9px] text-gray-500">Pin A0</span>
+                            </div>
+                            <div id="card-P" class="bg-cyber-dark p-3 rounded-xl border border-blue-500/30 transition-all">
+                                <span class="text-[10px] font-bold text-blue-400 block">頂葉 (P)</span>
+                                <span id="val-P" class="text-lg font-mono font-bold text-white my-1 block">0.0</span>
+                                <span class="text-[9px] text-gray-500">Pin A1</span>
+                            </div>
+                            <div id="card-O" class="bg-cyber-dark p-3 rounded-xl border border-purple-500/30 transition-all">
+                                <span class="text-[10px] font-bold text-purple-400 block">枕葉 (O)</span>
+                                <span id="val-O" class="text-lg font-mono font-bold text-white my-1 block">0.0</span>
+                                <span class="text-[9px] text-gray-500">Pin A2</span>
+                            </div>
+                            <div id="card-LT" class="bg-cyber-dark p-3 rounded-xl border border-emerald-500/30 transition-all">
+                                <span class="text-[10px] font-bold text-emerald-400 block">左顳葉 (LT)</span>
+                                <span id="val-LT" class="text-lg font-mono font-bold text-white my-1 block">0.0</span>
+                                <span class="text-[9px] text-gray-500">Pin A3</span>
+                            </div>
+                            <div id="card-RT" class="bg-cyber-dark p-3 rounded-xl border border-emerald-500/30 transition-all">
+                                <span class="text-[10px] font-bold text-emerald-400 block">右顳葉 (RT)</span>
+                                <span id="val-RT" class="text-lg font-mono font-bold text-white my-1 block">0.0</span>
+                                <span class="text-[9px] text-gray-500">Pin A4</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= MODULE 3: WORKSHEET & COMPARISON ================= -->
+        <section id="module-worksheet" class="tab-content hidden space-y-6">
+            
+            <div class="bg-cyber-card rounded-2xl p-6 border border-cyber-border space-y-4 overflow-x-auto">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-cyber-border pb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-table text-cyan-400"></i> 數據收集與比較表 (Data Streamer Summary)
+                        </h2>
+                        <p class="text-xs text-gray-400 mt-1">自動整合「沒有保護」、「塑膠頭盔 (X)」與「保護裝置 (Y)」於 30°、60°、90° 下的平均撞擊力數據。</p>
+                    </div>
+                    <button onclick="autoFillSampleData()" class="px-3 py-1.5 bg-cyber-dark border border-cyan-500/40 text-cyan-300 rounded-lg text-xs font-semibold hover:bg-cyan-950/40">
+                        <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> 自動填入模擬實驗數據
+                    </button>
+                </div>
+
+                <table class="w-full text-xs text-left text-gray-300 min-w-[700px] border-collapse">
+                    <thead class="bg-cyber-dark text-cyan-400 uppercase text-[11px]">
+                        <tr>
+                            <th class="p-2.5 border border-cyber-border">角度 / 條件</th>
+                            <th class="p-2.5 border border-cyber-border text-center">測試項目</th>
+                            <th class="p-2.5 border border-cyber-border text-center">前額葉 (F)</th>
+                            <th class="p-2.5 border border-cyber-border text-center">枕葉 (O)</th>
+                            <th class="p-2.5 border border-cyber-border text-center">頂葉 (P)</th>
+                            <th class="p-2.5 border border-cyber-border text-center">右顳葉 (RT)</th>
+                            <th class="p-2.5 border border-cyber-border text-center">左顳葉 (LT)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="data-table-body" class="divide-y divide-cyber-border">
+                        <!-- Dynamic content filled via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Visualization Chart -->
+            <div class="bg-cyber-card rounded-2xl p-6 border border-cyber-border">
+                <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-chart-column text-purple-400"></i> 撞擊力減幅對比圖 (Average Force Reduction Comparison)
+                </h3>
+                <div class="h-64 sm:h-80 w-full">
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Interactive Quiz -->
+            <div class="bg-cyber-card rounded-2xl p-6 border border-cyber-border space-y-6">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2 border-b border-cyber-border pb-3">
+                    <i class="fa-solid fa-brain text-pink-400"></i> C. 腦力激盪與挑戰 (Interactive Quiz)
+                </h2>
+
+                <div class="bg-cyber-dark/60 p-5 rounded-xl border border-cyber-border space-y-3">
+                    <h4 class="text-sm font-bold text-white">
+                        <span class="text-cyan-400">Q1.</span> 假設前額葉 (Frontal Lobe) 在高角度撞擊中受創最深，這可能影響哪些大腦功能？（可複選）
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        <label class="flex items-center space-x-2 bg-cyber-card p-3 rounded-lg border border-cyber-border cursor-pointer hover:border-cyan-500">
+                            <input type="checkbox" name="q1" value="a" class="rounded accent-cyan-500">
+                            <span>思考與決策混亂、難以制定計劃</span>
+                        </label>
+                        <label class="flex items-center space-x-2 bg-cyber-card p-3 rounded-lg border border-cyber-border cursor-pointer hover:border-cyan-500">
+                            <input type="checkbox" name="q1" value="b" class="rounded accent-cyan-500">
+                            <span>感覺不到觸覺或冷熱</span>
+                        </label>
+                        <label class="flex items-center space-x-2 bg-cyber-card p-3 rounded-lg border border-cyber-border cursor-pointer hover:border-cyan-500">
+                            <input type="checkbox" name="q1" value="c" class="rounded accent-cyan-500">
+                            <span>情緒控制變差或性格改變</span>
+                        </label>
+                        <label class="flex items-center space-x-2 bg-cyber-card p-3 rounded-lg border border-cyber-border cursor-pointer hover:border-cyan-500">
+                            <input type="checkbox" name="q1" value="d" class="rounded accent-cyan-500">
+                            <span>視覺出現模糊重影</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="bg-cyber-dark/60 p-5 rounded-xl border border-cyber-border space-y-3">
+                    <h4 class="text-sm font-bold text-white">
+                        <span class="text-cyan-400">Q2.</span> 請將實驗中的變數與正確的定義進行配對：
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                        <div class="bg-cyber-card p-3 rounded-lg border border-cyber-border space-y-2">
+                            <span class="font-bold text-cyan-300 block">1. 自變數 (Independent)</span>
+                            <select id="match-var-1" class="w-full bg-cyber-dark border border-cyber-border p-2 rounded text-gray-200">
+                                <option value="">-- 請選擇對應項目 --</option>
+                                <option value="force">A. 記錄到的撞擊力數據</option>
+                                <option value="design">B. 保護物料與撞擊角度</option>
+                                <option value="control">C. 釋放高度與網球重量</option>
+                            </select>
+                        </div>
+
+                        <div class="bg-cyber-card p-3 rounded-lg border border-cyber-border space-y-2">
+                            <span class="font-bold text-emerald-300 block">2. 應變量 (Dependent)</span>
+                            <select id="match-var-2" class="w-full bg-cyber-dark border border-cyber-border p-2 rounded text-gray-200">
+                                <option value="">-- 請選擇對應項目 --</option>
+                                <option value="force">A. 記錄到的撞擊力數據</option>
+                                <option value="design">B. 保護物料與撞擊角度</option>
+                                <option value="control">C. 釋放高度與網球重量</option>
+                            </select>
+                        </div>
+
+                        <div class="bg-cyber-card p-3 rounded-lg border border-cyber-border space-y-2">
+                            <span class="font-bold text-purple-300 block">3. 控制變數 (Control)</span>
+                            <select id="match-var-3" class="w-full bg-cyber-dark border border-cyber-border p-2 rounded text-gray-200">
+                                <option value="">-- 請選擇對應項目 --</option>
+                                <option value="force">A. 記錄到的撞擊力數據</option>
+                                <option value="design">B. 保護物料與撞擊角度</option>
+                                <option value="control">C. 釋放高度與網球重量</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-2 flex items-center justify-between">
+                    <button onclick="checkQuizAnswers()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-xl shadow-lg shadow-emerald-600/20 transition-all">
+                        <i class="fa-solid fa-circle-check mr-1"></i> 提交答案並核對
+                    </button>
+                    <div id="quiz-score" class="text-sm font-bold text-cyan-400 hidden"></div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-cyber-card border-t border-cyber-border mt-10 py-4 text-center text-xs text-gray-400">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+            <div>
+                <span>樂道中學 Lock Tao Secondary School — STREAM 專題活動專用</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="https://www.instagram.com/ltss.official" target="_blank" class="hover:text-cyan-400 transition-colors">
+                    <i class="fa-brands fa-instagram text-base mr-1"></i> @ltss.official
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // ================= GLOBALS & STATE =================
+        const brainLobes = {
+            'F': { name: '前額葉 (Frontal Lobe)', nickname: '指揮官', task: '思考與決策', func: '計劃、性格、情緒控制、邏輯推理', damage: '思考混亂、難以制定計劃、情緒容易失控。', pin: 'A0 (100Ω)' },
+            'P': { name: '頂葉 (Parietal Lobe)', nickname: '感覺接收站', task: '處理觸覺與空間', func: '感受冷熱、疼痛、壓力與身體位置感知', damage: '無法準確感受冷熱或疼痛，失去空間方向感。', pin: 'A1 (100Ω)' },
+            'O': { name: '枕葉 (Occipital Lobe)', nickname: '視覺攝影機', task: '處理影像與視覺', func: '辨識顏色、形狀、移動物件與圖像解析', damage: '視覺出現重影或無法辨識圖像。', pin: 'A2 (100Ω)' },
+            'LT': { name: '左顳葉 (Left Temporal)', nickname: '聽力圖書館(左)', task: '處理聲音與語言', func: '聽力解析、語言理解與聲音記憶', damage: '聽覺理解障礙或記憶衰退。', pin: 'A3 (100Ω)' },
+            'RT': { name: '右顳葉 (Right Temporal)', nickname: '聽力圖書館(右)', task: '處理聲音與節奏', func: '音樂感知、面孔辨識與非語言記憶', damage: '難以辨識熟悉的面孔或音樂旋律。', pin: 'A4 (100Ω)' }
+        };
+
+        let currentSimState = {
+            controlMode: 'gestures', // 'gestures' or 'manual'
+            target: 'F',
+            protection: 'none',
+            strategy: 'cushion',
+            angle: 60,
+            height: 20,
+            trial: 1
+        };
+
+        let experimentData = {
+            '30': { none: {t1: null, t2: null}, helmet: {t1: null, t2: null}, custom: {t1: null, t2: null} },
+            '60': { none: {t1: null, t2: null}, helmet: {t1: null, t2: null}, custom: {t1: null, t2: null} },
+            '90': { none: {t1: null, t2: null}, helmet: {t1: null, t2: null}, custom: {t1: null, t2: null} }
+        };
+
+        let chartInstance = null;
+        let lastPinchState = false; // Prevents spamming triggers
+
+        // ================= TAB NAVIGATION =================
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('text-cyan-400', 'bg-cyber-card', 'border', 'border-cyan-500/30');
+                btn.classList.add('text-gray-400');
+            });
+
+            document.getElementById(`module-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            activeBtn.classList.add('text-cyan-400', 'bg-cyber-card', 'border', 'border-cyan-500/30');
+            activeBtn.classList.remove('text-gray-400');
+
+            if (tabId === 'simulator') {
+                setTimeout(initCanvas, 50);
+            } else if (tabId === 'worksheet') {
+                renderDataTable();
+                renderChart();
+            }
+        }
+
+        // ================= MODULE 1: BRAIN EXPLORER =================
+        function selectLobe(code) {
+            const data = brainLobes[code];
+            if (!data) return;
+
+            document.getElementById('lobe-code').innerText = `${code} LOBE`;
+            document.getElementById('lobe-name').innerText = data.name;
+            document.getElementById('lobe-nickname').innerText = data.nickname;
+            document.getElementById('lobe-task').innerText = data.task;
+            document.getElementById('lobe-function').innerText = data.func;
+            document.getElementById('lobe-damage').innerText = data.damage;
+            document.getElementById('lobe-sensor-pin').innerText = data.pin;
+
+            document.querySelectorAll('.lobe-btn').forEach(btn => btn.classList.remove('active'));
+            const btn = document.getElementById(`btn-lobe-${code}`);
+            if (btn) btn.classList.add('active');
+        }
+
+        // ================= MODULE 2: MODE & WEBCAM HAND TRACKING =================
+        function setControlMode(mode) {
+            currentSimState.controlMode = mode;
+            const btnG = document.getElementById('mode-btn-gestures');
+            const btnM = document.getElementById('mode-btn-manual');
+            const sliderGroup = document.getElementById('manual-sliders-group');
+
+            if (mode === 'gestures') {
+                btnG.classList.add('text-cyan-400', 'bg-cyber-card', 'border', 'border-cyan-500/30');
+                btnG.classList.remove('text-gray-400');
+                btnM.classList.remove('text-cyan-400', 'bg-cyber-card', 'border', 'border-cyan-500/30');
+                btnM.classList.add('text-gray-400');
+                
+                sliderGroup.classList.add('opacity-50', 'pointer-events-none');
+            } else {
+                btnM.classList.add('text-cyan-400', 'bg-cyber-card', 'border', 'border-cyan-500/30');
+                btnM.classList.remove('text-gray-400');
+                btnG.classList.remove('text-cyan-400', 'bg-cyber-card', 'border', 'border-cyan-500/30');
+                btnG.classList.add('text-gray-400');
+
+                sliderGroup.classList.remove('opacity-50', 'pointer-events-none');
+            }
+        }
+
+        // --- MEDIAPIPE HANDS SETUP ---
+        let hands, camera;
+        function startWebcam() {
+            const videoElement = document.getElementById('webcam-video');
+            const handCanvas = document.getElementById('hand-canvas');
+            const handCtx = handCanvas.getContext('2d');
+            const statusTag = document.getElementById('webcam-status');
+            const placeholder = document.getElementById('cam-placeholder');
+
+            placeholder.classList.add('hidden');
+            statusTag.innerText = '正在初始化 AI 關節模型...';
+
+            hands = new Hands({
+                locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+            });
+
+            hands.setOptions({
+                maxNumHands: 1,
+                modelComplexity: 1,
+                minDetectionConfidence: 0.6,
+                minTrackingConfidence: 0.6
+            });
+
+            hands.onResults((results) => {
+                // Clear overlay canvas
+                handCanvas.width = videoElement.videoWidth || 320;
+                handCanvas.height = videoElement.videoHeight || 240;
+                handCtx.clearRect(0, 0, handCanvas.width, handCanvas.height);
+
+                if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                    statusTag.innerText = '手勢偵測中 ✓';
+                    statusTag.className = 'text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+
+                    const landmarks = results.multiHandLandmarks[0];
+
+                    // Draw skeleton & landmarks
+                    drawHandLandmarks(handCtx, landmarks, handCanvas.width, handCanvas.height);
+
+                    if (currentSimState.controlMode === 'gestures' && !isAnimating) {
+                        processHandControl(landmarks);
+                    }
+                } else {
+                    statusTag.innerText = '未偵測到手部';
+                    statusTag.className = 'text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30';
+                }
+            });
+
+            camera = new Camera(videoElement, {
+                onFrame: async () => {
+                    await hands.send({ image: videoElement });
+                },
+                width: 640,
+                height: 480
+            });
+
+            camera.start().catch(err => {
+                alert('無法取得鏡頭權限: ' + err.message);
+                statusTag.innerText = '鏡頭開啟失敗';
+            });
+        }
+
+        function drawHandLandmarks(ctx, landmarks, w, h) {
+            ctx.fillStyle = '#38bdf8';
+            ctx.strokeStyle = '#22c55e';
+            ctx.lineWidth = 3;
+
+            // Draw Connection Lines
+            const connections = [
+                [0,1],[1,2],[2,3],[3,4], // Thumb
+                [0,5],[5,6],[6,7],[7,8], // Index
+                [0,9],[9,10],[10,11],[11,12], // Middle
+                [0,13],[13,14],[14,15],[15,16], // Ring
+                [0,17],[17,18],[18,19],[19,20], // Pinky
+                [5,9],[9,13],[13,17] // Palm
+            ];
+
+            connections.forEach(([i, j]) => {
+                ctx.beginPath();
+                ctx.moveTo(landmarks[i].x * w, landmarks[i].y * h);
+                ctx.lineTo(landmarks[j].x * w, landmarks[j].y * h);
+                ctx.stroke();
+            });
+
+            // Draw Points
+            landmarks.forEach((pt, idx) => {
+                ctx.beginPath();
+                ctx.arc(pt.x * w, pt.y * h, (idx === 4 || idx === 8) ? 6 : 3, 0, Math.PI * 2);
+                ctx.fillStyle = (idx === 4 || idx === 8) ? '#ef4444' : '#38bdf8';
+                ctx.fill();
+            });
+        }
+
+        /**
+         * Real-time Gesture Control Logic
+         * - Y-axis of Palm (Index base pt 5 / Wrist pt 0) controls Drop Height (10 - 50 cm)
+         * - X-axis controls Pendulum Swing Angle (30° - 90°)
+         * - Distance between Thumb Tip (4) and Index Tip (8) Pinching triggers Impact
+         */
+        function processHandControl(landmarks) {
+            const indexTip = landmarks[8];
+            const thumbTip = landmarks[4];
+            const wrist = landmarks[0];
+
+            // 1. Height mapping: Hand Y from 0.8 (bottom/low height) to 0.2 (top/high height)
+            let mappedHeight = Math.round(10 + (1 - wrist.y) * 40);
+            mappedHeight = Math.max(10, Math.min(50, mappedHeight));
+            updateHeightVal(mappedHeight);
+
+            // 2. Angle mapping: Hand X from 0.2 to 0.8 -> 30° to 90°
+            // Note: Camera is mirrored so (1 - X) gives natural alignment
+            let handX = 1 - indexTip.x;
+            let mappedAngle = 30 + Math.round((handX - 0.2) / 0.6 * 60);
+            mappedAngle = Math.max(30, Math.min(90, mappedAngle));
+            
+            // Snap to nearest 30, 60, 90 for structured experimentation
+            let snappedAngle = 60;
+            if (mappedAngle < 45) snappedAngle = 30;
+            else if (mappedAngle > 75) snappedAngle = 90;
+            setAngle(snappedAngle);
+
+            // 3. Pinch Recognition (Distance between Thumb and Index Tip)
+            const dx = (thumbTip.x - indexTip.x);
+            const dy = (thumbTip.y - indexTip.y);
+            const pinchDist = Math.sqrt(dx*dx + dy*dy);
+
+            // Pinch Threshold (< 0.05 indicates thumb & index finger touching)
+            const isPinching = pinchDist < 0.05;
+
+            if (isPinching && !lastPinchState) {
+                // Trigger Simulation on initial pinch
+                runImpactSimulation();
+            }
+            lastPinchState = isPinching;
+        }
+
+        // ================= CANVAS SIMULATION ENGINE =================
+        let canvas, ctx;
+        let animationFrame;
+        let isAnimating = false;
+        let impactRipple = 0;
+
+        function initCanvas() {
+            canvas = document.getElementById('simCanvas');
+            if (!canvas) return;
+            ctx = canvas.getContext('2d');
+            
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width - 32;
+            canvas.height = 340;
+            drawScene(0);
+        }
+
+        function setAngle(deg) {
+            currentSimState.angle = deg;
+            document.querySelectorAll('.angle-btn').forEach(btn => {
+                btn.classList.remove('border-cyan-500', 'bg-cyan-950/40', 'text-cyan-400');
+                btn.classList.add('border-cyber-border', 'bg-cyber-dark', 'text-gray-300');
+            });
+            const activeBtn = document.getElementById(`angle-${deg}`);
+            if (activeBtn) activeBtn.classList.add('border-cyan-500', 'bg-cyan-950/40', 'text-cyan-400');
+
+            document.getElementById('live-angle-tag').innerText = `${deg}°`;
+            drawScene(0);
+        }
+
+        function setTrial(trialNum) {
+            currentSimState.trial = trialNum;
+            document.querySelectorAll('.trial-btn').forEach(btn => {
+                btn.classList.remove('border-cyan-500', 'bg-cyan-950/50', 'text-cyan-300');
+                btn.classList.add('border-cyber-border', 'bg-cyber-dark', 'text-gray-400');
+            });
+            const activeBtn = document.getElementById(`trial-${trialNum}`);
+            if (activeBtn) activeBtn.classList.add('border-cyan-500', 'bg-cyan-950/50', 'text-cyan-300');
+        }
+
+        function updateSimSetup() {
+            const prot = document.getElementById('sim-protection').value;
+            currentSimState.protection = prot;
+            currentSimState.target = document.getElementById('sim-target').value;
+            
+            const strategyBox = document.getElementById('custom-strategy-box');
+            if (prot === 'custom') strategyBox.classList.remove('hidden');
+            else strategyBox.classList.add('hidden');
+            
+            ['F', 'P', 'O', 'LT', 'RT'].forEach(k => {
+                const card = document.getElementById(`card-${k}`);
+                if (card) {
+                    if (k === currentSimState.target || (currentSimState.target === 'LT' && k === 'RT')) {
+                        card.classList.add('ring-2', 'ring-cyan-400', 'bg-cyan-950/30');
+                    } else {
+                        card.classList.remove('ring-2', 'ring-cyan-400', 'bg-cyan-950/30');
+                    }
+                }
+            });
+
+            drawScene(0);
+        }
+
+        function updateHeightVal(val) {
+            currentSimState.height = parseInt(val);
+            document.getElementById('sim-height').value = val;
+            document.getElementById('height-val').innerText = `${val} cm`;
+            document.getElementById('live-height-tag').innerText = `${val} cm`;
+        }
+
+        function drawScene(progress = 0) {
+            if (!ctx) return;
+            const w = canvas.width;
+            const h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+
+            const headX = w * 0.58;
+            const headY = h * 0.52;
+            const headRadius = 55;
+
+            let protectionThickness = 0;
+            if (currentSimState.protection === 'helmet') protectionThickness = 14;
+            else if (currentSimState.protection === 'custom') protectionThickness = 22;
+
+            let targetAngleRad = Math.PI; // Frontal default
+            if (currentSimState.target === 'P') targetAngleRad = Math.PI * 1.25;
+            else if (currentSimState.target === 'O') targetAngleRad = 0;
+            else if (currentSimState.target === 'LT') targetAngleRad = Math.PI * 0.8;
+
+            const totalSurfaceRadius = headRadius + protectionThickness;
+            const ballRadius = 16;
+            
+            const impactX = headX + Math.cos(targetAngleRad) * totalSurfaceRadius;
+            const impactY = headY + Math.sin(targetAngleRad) * totalSurfaceRadius;
+
+            const pendulumLength = 140 + (currentSimState.height - 10) * 1.8;
+            const swingAngleDeg = currentSimState.angle;
+            
+            const pivotX = impactX + Math.cos(targetAngleRad) * pendulumLength;
+            const pivotY = impactY + Math.sin(targetAngleRad) * pendulumLength - 60;
+
+            let curProgress = progress;
+            if (curProgress > 1) { // Bounce Back Physics
+                curProgress = 1 - (progress - 1) * 0.6;
+            }
+
+            const currentSwingAngle = (1 - curProgress) * (swingAngleDeg * Math.PI / 180);
+            
+            const ballX = pivotX + (impactX - pivotX) * curProgress - Math.sin(currentSwingAngle) * 30;
+            const ballY = pivotY + (impactY - pivotY) * curProgress - (1 - Math.cos(currentSwingAngle)) * 20;
+
+            // 1. Stand Frame
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(pivotX - 25, pivotY - 10);
+            ctx.lineTo(pivotX + 25, pivotY - 10);
+            ctx.moveTo(pivotX, pivotY - 10);
+            ctx.lineTo(pivotX, pivotY);
+            ctx.stroke();
+
+            // 2. Pendulum String
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(pivotX, pivotY);
+            ctx.lineTo(ballX, ballY);
+            ctx.stroke();
+
+            // 3. Impact Ball
+            ctx.beginPath();
+            ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
+            ctx.fillStyle = '#a3e635';
+            ctx.fill();
+            ctx.strokeStyle = '#65a30d';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            // 4. Brain Head Model
+            ctx.save();
+            ctx.translate(headX, headY);
+            if (currentSimState.target === 'O') ctx.scale(-1, 1);
+
+            ctx.beginPath();
+            ctx.ellipse(0, 0, headRadius, headRadius * 0.85, 0, 0, Math.PI * 2);
+            ctx.fillStyle = '#1e293b';
+            ctx.fill();
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Lobes Colors
+            ctx.beginPath();
+            ctx.arc(-15, -10, 25, Math.PI * 0.7, Math.PI * 1.8);
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.35)'; ctx.fill();
+            ctx.beginPath();
+            ctx.arc(10, -20, 22, Math.PI * 1.1, Math.PI * 0.2);
+            ctx.fillStyle = 'rgba(59, 130, 246, 0.35)'; ctx.fill();
+            ctx.beginPath();
+            ctx.arc(25, 5, 20, Math.PI * 1.7, Math.PI * 0.6);
+            ctx.fillStyle = 'rgba(168, 85, 247, 0.35)'; ctx.fill();
+            ctx.beginPath();
+            ctx.arc(-5, 12, 22, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(16, 185, 129, 0.35)'; ctx.fill();
+
+            // 5. Helmet / Custom Device Shell
+            if (currentSimState.protection === 'helmet') {
+                ctx.beginPath();
+                ctx.arc(0, 0, headRadius + 8, Math.PI * 0.7, Math.PI * 2.3);
+                ctx.strokeStyle = '#0284c7';
+                ctx.lineWidth = 10;
+                ctx.lineCap = 'round';
+                ctx.stroke();
+            } else if (currentSimState.protection === 'custom') {
+                ctx.beginPath();
+                ctx.arc(0, 0, headRadius + 12, Math.PI * 0.65, Math.PI * 2.35);
+                ctx.strokeStyle = '#22c55e';
+                ctx.lineWidth = 14;
+                ctx.setLineDash([6, 6]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            ctx.restore();
+
+            // 6. Collision Shockwave Effect
+            if (progress >= 1.0 && impactRipple > 0) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(impactX, impactY, impactRipple * 30, 0, Math.PI * 2);
+                ctx.strokeStyle = `rgba(239, 68, 68, ${1 - impactRipple})`;
+                ctx.lineWidth = 4;
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        function runImpactSimulation() {
+            if (isAnimating) return;
+            isAnimating = true;
+
+            const statusTag = document.getElementById('status-tag');
+            statusTag.innerText = '擺錘釋放中...';
+            statusTag.className = 'px-2.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30';
+
+            let progress = 0;
+            impactRipple = 0;
+            const speed = 0.04 * (currentSimState.height / 20);
+
+            function animate() {
+                progress += speed;
+
+                if (progress >= 1.0 && progress < 1.15) {
+                    impactRipple += 0.15;
+                }
+
+                if (progress >= 1.25) {
+                    drawScene(0);
+                    triggerCollisionEvent();
+                    isAnimating = false;
+                    statusTag.innerText = '撞擊完成！物理數據已傳送至 Arduino Dashboard';
+                    statusTag.className = 'px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+                } else {
+                    drawScene(progress);
+                    animationFrame = requestAnimationFrame(animate);
+                }
+            }
+            animate();
+        }
+
+        function triggerCollisionEvent() {
+            const baseForce = (currentSimState.angle / 90) * 800 * (currentSimState.height / 20);
+            let dampening = 1.0;
+
+            if (currentSimState.protection === 'helmet') dampening = 0.45;
+            else if (currentSimState.protection === 'custom') {
+                const strat = document.getElementById('sim-strategy').value;
+                if (strat === 'cushion') dampening = 0.32;
+                else if (strat === 'airbag') dampening = 0.28;
+                else if (strat === 'shell') dampening = 0.40;
+                else if (strat === 'suspension') dampening = 0.25;
+            }
+
+            const noise = () => (Math.random() - 0.5) * 15;
+            const target = currentSimState.target;
+
+            const getForce = (lobeKey) => {
+                let factor = 0.4;
+                if (lobeKey === target) factor = 1.1;
+                else if (target === 'LT' && lobeKey === 'RT') factor = 0.85;
+                return Math.max(10, Math.round(baseForce * dampening * factor + noise()));
+            };
+
+            const results = {
+                F: getForce('F'), P: getForce('P'), O: getForce('O'), LT: getForce('LT'), RT: getForce('RT')
+            };
+
+            document.getElementById('val-F').innerText = results.F;
+            document.getElementById('val-P').innerText = results.P;
+            document.getElementById('val-O').innerText = results.O;
+            document.getElementById('val-LT').innerText = results.LT;
+            document.getElementById('val-RT').innerText = results.RT;
+
+            const angKey = currentSimState.angle.toString();
+            const protKey = currentSimState.protection;
+            const trialKey = `t${currentSimState.trial}`;
+
+            if (experimentData[angKey]) {
+                experimentData[angKey][protKey][trialKey] = results;
+            }
+        }
+
+        // ================= WORKSHEET & QUIZ LOGIC =================
+        function autoFillSampleData() {
+            const angles = ['30', '60', '90'];
+            angles.forEach(ang => {
+                const mult = parseInt(ang) / 90;
+                experimentData[ang].none.t1 = { F: Math.round(750*mult), O: Math.round(500*mult), P: Math.round(680*mult), RT: Math.round(580*mult), LT: Math.round(600*mult) };
+                experimentData[ang].none.t2 = { F: Math.round(770*mult), O: Math.round(520*mult), P: Math.round(690*mult), RT: Math.round(590*mult), LT: Math.round(610*mult) };
+
+                experimentData[ang].helmet.t1 = { F: Math.round(350*mult), O: Math.round(240*mult), P: Math.round(310*mult), RT: Math.round(270*mult), LT: Math.round(280*mult) };
+                experimentData[ang].helmet.t2 = { F: Math.round(360*mult), O: Math.round(250*mult), P: Math.round(320*mult), RT: Math.round(280*mult), LT: Math.round(290*mult) };
+
+                experimentData[ang].custom.t1 = { F: Math.round(220*mult), O: Math.round(150*mult), P: Math.round(190*mult), RT: Math.round(170*mult), LT: Math.round(180*mult) };
+                experimentData[ang].custom.t2 = { F: Math.round(230*mult), O: Math.round(160*mult), P: Math.round(200*mult), RT: Math.round(180*mult), LT: Math.round(190*mult) };
+            });
+
+            renderDataTable();
+            renderChart();
+        }
+
+        function renderDataTable() {
+            const tbody = document.getElementById('data-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            const angles = ['30', '60', '90'];
+            angles.forEach(ang => {
+                ['none', 'helmet', 'custom'].forEach((prot, pIdx) => {
+                    const labelMap = { none: '沒有保護', helmet: '塑膠頭盔 (X)', custom: '保護裝置 (Y)' };
+                    const d = experimentData[ang][prot];
+
+                    const t1 = d.t1 || { F: '-', O: '-', P: '-', RT: '-', LT: '-' };
+                    const t2 = d.t2 || { F: '-', O: '-', P: '-', RT: '-', LT: '-' };
+
+                    const calcAvg = (k) => (typeof t1[k] === 'number' && typeof t2[k] === 'number') ? Math.round((t1[k] + t2[k]) / 2) : '-';
+
+                    const avg = { F: calcAvg('F'), O: calcAvg('O'), P: calcAvg('P'), RT: calcAvg('RT'), LT: calcAvg('LT') };
+
+                    const rowHtml = `
+                        <tr class="${pIdx === 0 ? 'bg-cyber-dark/40' : ''}">
+                            <td class="p-2 border border-cyber-border font-bold text-cyan-300" rowspan="3">${pIdx === 0 ? ang + '°' : ''}</td>
+                            <td class="p-2 border border-cyber-border font-medium">${labelMap[prot]} (測試 1)</td>
+                            <td class="p-2 border border-cyber-border text-center font-mono">${t1.F}</td>
+                            <td class="p-2 border border-cyber-border text-center font-mono">${t1.O}</td>
+                            <td class="p-2 border border-cyber-border text-center font-mono">${t1.P}</td>
+                            <td class="p-2 border border-cyber-border text-center font-mono">${t1.RT}</td>
+                            <td class="p-2 border border-cyber-border text-center font-mono">${t1.LT}</td>
+                        </tr>
+                        <tr>
+                            <td class="p-2 border border-cyber-border font-medium">${labelMap[prot]} (測試 2)</td>
+                            <td class="p-2 border border-cyber-border text-center font-mono">${t2.F}</td>
+                            <td class="p-2 border border-cyber-border text-center font-mono">${t2.O}</td>
+                            <td class="p-2 border border-cyber-border text-center font-mono">${t2.P}</td>
+                            <td class="p-2 border border-cyber-border text-center font-mono">${t2.RT}</td>
+                            <td class="p-2 border border-cyber-border text-center font-mono">${t2.LT}</td>
+                        </tr>
+                        <tr class="bg-cyan-950/20 font-bold text-cyan-400">
+                            <td class="p-2 border border-cyber-border">平均撞擊力 (Average)</td>
+                            <td class="p-2 border border-cyber-border text-center font-mono">${avg.F}</td>
+                            <td class="p-2 border border-cyber-border text-center font-mono">${avg.O}</td>
+                            <td class="p-2 border border-cyber-border text-center font-mono">${avg.P}</td>
+                            <td class="p-2 border border-cyber-border text-center font-mono">${avg.RT}</td>
+                            <td class="p-2 border border-cyber-border text-center font-mono">${avg.LT}</td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += rowHtml;
+                });
+            });
+        }
+
+        function renderChart() {
+            const ctxChart = document.getElementById('comparisonChart');
+            if (!ctxChart) return;
+
+            const d60 = experimentData['60'];
+            const getOverallAvg = (prot) => {
+                const t1 = d60[prot].t1;
+                const t2 = d60[prot].t2;
+                if (!t1 || !t2) return 0;
+                return Math.round(((t1.F+t1.O+t1.P+t1.RT+t1.LT) + (t2.F+t2.O+t2.P+t2.RT+t2.LT)) / 10);
+            };
+
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctxChart, {
+                type: 'bar',
+                data: {
+                    labels: ['沒有任何保護', '塑膠頭盔 (Helmet X)', '自訂保護裝置 (Device Y)'],
+                    datasets: [{
+                        label: '60° 撞擊下之平均受力 (N)',
+                        data: [getOverallAvg('none'), getOverallAvg('helmet'), getOverallAvg('custom')],
+                        backgroundColor: ['rgba(239, 68, 68, 0.7)', 'rgba(56, 189, 248, 0.7)', 'rgba(34, 197, 94, 0.7)'],
+                        borderColor: ['#ef4444', '#38bdf8', '#22c55e'],
+                        borderWidth: 2, borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#e2e8f0' } } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#2a3652' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { color: '#2a3652' }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+        }
+
+        function checkQuizAnswers() {
+            let score = 0;
+            const q1Checked = Array.from(document.querySelectorAll('input[name="q1"]:checked')).map(cb => cb.value);
+            if (q1Checked.includes('a') && q1Checked.includes('c') && !q1Checked.includes('b') && !q1Checked.includes('d')) score++;
+
+            const v1 = document.getElementById('match-var-1').value;
+            const v2 = document.getElementById('match-var-2').value;
+            const v3 = document.getElementById('match-var-3').value;
+            if (v1 === 'design' && v2 === 'force' && v3 === 'control') score++;
+
+            const scoreDisplay = document.getElementById('quiz-score');
+            scoreDisplay.classList.remove('hidden');
+            scoreDisplay.innerHTML = `<i class="fa-solid fa-trophy text-yellow-400 mr-1"></i> 得分: <span class="text-xl font-bold">${score}</span> / 2`;
+        }
+
+        window.onload = function() {
+            selectLobe('F');
+            autoFillSampleData();
+        };
+
+        window.onresize = function() {
+            if (canvas) initCanvas();
+        };
+    </script>
+</body>
+</html>
